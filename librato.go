@@ -1,3 +1,4 @@
+// Package librato provides methods and structs for working with Librato Metrics API
 package librato
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -8,12 +9,13 @@ package librato
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
-	"ek/req"
-	"ek/timeutil"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/essentialkaos/ek/req"
+	"github.com/essentialkaos/ek/timeutil"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -254,6 +256,8 @@ func (an *Annotations) Delete() error {
 
 		BasicAuthUsername: Mail,
 		BasicAuthPassword: Token,
+
+		AutoDiscard: true,
 	}.Do()
 
 	if err != nil {
@@ -303,6 +307,8 @@ func (m *Metrics) sendData() []error {
 
 		ContentType: "application/json",
 		Body:        jsonData,
+
+		AutoDiscard: true,
 	}.Do()
 
 	if err != nil {
@@ -350,6 +356,8 @@ func (an *Annotations) sendData() []error {
 
 			ContentType: "application/json",
 			Body:        jsonData,
+
+			AutoDiscard: true,
 		}.Do()
 
 		if err != nil {
