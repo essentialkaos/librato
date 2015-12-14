@@ -78,7 +78,7 @@ var (
 	Token = ""
 )
 
-// URL of Librato API endpoint
+// ApiEndpoint contians URL of Librato API endpoint
 var ApiEndpoint = "https://metrics-api.librato.com"
 
 // AsyncSending enable async data sending (enabled by default)
