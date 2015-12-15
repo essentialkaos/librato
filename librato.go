@@ -49,25 +49,93 @@ type Annotations struct {
 
 // Gauge struct
 type Gauge struct {
-	Name        string      `json:"name"`
-	Value       interface{} `json:"value"`
-	MeasureTime int64       `json:"measure_time,omitempty"`
-	Source      string      `json:"source,omitempty"`
-	Count       interface{} `json:"count,omitempty"`
-	Sum         interface{} `json:"sum,omitempty"`
-	Min         interface{} `json:"min,omitempty"`
-	Max         interface{} `json:"max,omitempty"`
-	SumSquares  interface{} `json:"sum_squares,omitempty"`
+
+	// Each metric has a name that is unique to its class of metrics e.g. a gauge name
+	// must be unique amongst gauges. The name identifies a metric in subsequent API
+	// calls to store/query individual measurements and can be up to 255 characters
+	// in length. Valid characters for metric names are 'A-Za-z0-9.:-_'. The metric
+	// namespace is case insensitive.
+	Name string `json:"name"`
+
+	// The numeric value of an individual measurement. Multiple formats are
+	// supported (e.g. integer, floating point, etc) but the value must be numeric.
+	Value interface{} `json:"value"`
+
+	// The epoch time at which an individual measurement occurred with a maximum
+	// resolution of seconds.
+	MeasureTime int64 `json:"measure_time,omitempty"`
+
+	// Source is an optional property that can be used to subdivide a common
+	// gauge/counter amongst multiple members of a population. For example
+	// the number of requests/second serviced by an application could be broken
+	// up amongst a group of server instances in a scale-out tier by setting
+	// the hostname as the value of source.
+	//
+	// Source names can be up to 255 characters in length and must be composed
+	// of the following 'A-Za-z0-9.:-_'. The word all is a reserved word and
+	// cannot be used as a user source. The source namespace is case insensitive.
+	Source string `json:"source,omitempty"`
+
+	// Indicates the request corresponds to a multi-sample measurement. This is
+	// useful if measurements are taken very frequently in a closed loop and the
+	// metric value is only periodically reported. If count is set, then sum must
+	// also be set in order to calculate an average value for the recorded metric
+	// measurement. Additionally min, max, and sum_squares may also be set when
+	// count is set. The value parameter should not be set if count is set.
+	Count interface{} `json:"count,omitempty"`
+
+	// If count was set, sum must be set to the summation of the individual
+	// measurements. The combination of count and sum are used to calculate an
+	// average value for the recorded metric measurement.
+	Sum interface{} `json:"sum,omitempty"`
+
+	// If count was set, min can be used to report the smallest individual
+	// measurement amongst the averaged set.
+	Min interface{} `json:"min,omitempty"`
+
+	// If count was set, max can be used to report the largest individual
+	// measurement amongst the averaged set.
+	Max interface{} `json:"max,omitempty"`
+
+	// If count was set, sum_squares report the summation of the squared
+	// individual measurements. If sum_squares is set, a standard deviation
+	// can be calculated for the recorded metric measurement.
+	SumSquares interface{} `json:"sum_squares,omitempty"`
 }
 
 // Annotation struct
 type Annotation struct {
-	Title     string   `json:"title"`
-	Source    string   `json:"source,omitempty"`
-	Desc      string   `json:"description,omitempty"`
-	Links     []string `json:"links,omitempty"`
-	StartTime int64    `json:"start_time,omitempty"`
-	EndTime   int64    `json:"end_time,omitempty"`
+
+	// The title of an annotation is a string and may contain spaces. The title should
+	// be a short, high-level summary of the annotation e.g. v45 Deployment. The title
+	// is a required parameter to create an annotation.
+	Title string `json:"title"`
+
+	// A string which describes the originating source of an annotation when that
+	// annotation is tracked across multiple members of a population.
+	// Examples: foo3.bar.com, user-123, 77025.
+	Source string `json:"source,omitempty"`
+
+	// The description contains extra meta-data about a particular annotation. The
+	// description should contain specifics on the individual annotation e.g.
+	// Deployed 9b562b2: shipped new feature foo! A description is not required to
+	// create an annotation.
+	Desc string `json:"description,omitempty"`
+
+	// An optional list of references to resources associated with the particular
+	// annotation. For example, these links could point to a build page in a CI
+	// system or a changeset description of an SCM. Each link has a tag that
+	// defines the link\'s relationship to the annotation.
+	Links []string `json:"links,omitempty"`
+
+	// The unix timestamp indicating the the time at which the event referenced by this
+	// annotation started. By default this is set to the current time if not specified.
+	StartTime int64 `json:"start_time,omitempty"`
+
+	// The unix timestamp indicating the the time at which the event referenced by
+	// this annotation ended. For events that have a duration, this is a useful way
+	// to annotate the duration of the event.
+	EndTime int64 `json:"end_time,omitempty"`
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
