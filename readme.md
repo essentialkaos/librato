@@ -14,6 +14,7 @@ This package is unnder heavy construction, please do not use in production code.
 
 #### Example
 
+```Go
     package main
 
     // ////////////////////////////////////////////////////////////////////////////////// //
@@ -82,6 +83,7 @@ This package is unnder heavy construction, please do not use in production code.
         os.Exit(1)
       }
     }
+```
 
 #### License
 
