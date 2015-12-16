@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/essentialkaos/ek/req"
@@ -171,9 +172,35 @@ type Annotation struct {
 	EndTime int64 `json:"end_time,omitempty"`
 }
 
-type mesdata struct {
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+type mesData struct {
 	Gauges   []*Gauge   `json:"gauges,omitempty"`
 	Counters []*Counter `json:"counters,omitempty"`
+}
+
+type paramsErrorMap struct {
+	Params map[string]string `json:"params"`
+}
+
+type requestErrorSlice struct {
+	Request []string `json:"request"`
+}
+
+type systemErrorSlice struct {
+	System []string `json:"system"`
+}
+
+type paramsErrors struct {
+	Errors paramsErrorMap `json:"errors"`
+}
+
+type requestErrors struct {
+	Errors requestErrorSlice `json:"errors"`
+}
+
+type systemErrors struct {
+	Errors systemErrorSlice `json:"errors"`
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -338,9 +365,9 @@ func (an *Annotations) Send() []error {
 }
 
 // Delete remove annotations stream
-func (an *Annotations) Delete() error {
+func (an *Annotations) Delete() []error {
 	if Mail == "" || Token == "" {
-		return errors.New("Access credentials is not set")
+		return []error{errors.New("Access credentials is not set")}
 	}
 
 	var err error
@@ -348,7 +375,7 @@ func (an *Annotations) Delete() error {
 	err = validateAnotations(an)
 
 	if err != nil {
-		return err
+		return []error{err}
 	}
 
 	resp, err := req.Request{
@@ -356,17 +383,17 @@ func (an *Annotations) Delete() error {
 
 		BasicAuthUsername: Mail,
 		BasicAuthPassword: Token,
-
-		AutoDiscard: true,
 	}.Delete()
 
 	if err != nil {
-		return fmt.Errorf("Error while sending request: %s", err.Error())
+		return []error{fmt.Errorf("Error while sending request: %s", err.Error())}
 	}
 
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Service return error code %d", resp.StatusCode)
+	if resp.StatusCode > 299 || resp.StatusCode == 0 {
+		return extractErrors(resp.String())
 	}
+
+	resp.Discard()
 
 	return nil
 }
@@ -399,32 +426,31 @@ func (mt *Metrics) getLastSendingDate() int64 {
 func (mt *Metrics) sendData() []error {
 	jsonData, err := json.MarshalIndent(convertQueue(mt.queue), "", "  ")
 
-	mt.queue = make([]Measurement, 0)
-
 	if err != nil {
-		return []error{err}
+		return []error{}
 	}
 
+	mt.queue = make([]Measurement, 0)
+
 	resp, err := req.Request{
-		Method: req.POST,
-		URL:    APIEndpoint + "/v1/metrics/",
+		URL: APIEndpoint + "/v1/metrics/",
 
 		BasicAuthUsername: Mail,
 		BasicAuthPassword: Token,
 
 		ContentType: "application/json",
 		Body:        jsonData,
-
-		AutoDiscard: true,
-	}.Do()
+	}.Post()
 
 	if err != nil {
 		return []error{err}
 	}
 
-	if resp.StatusCode != 200 {
-		return []error{fmt.Errorf("Service return error code %d", resp.StatusCode)}
+	if resp.StatusCode > 299 || resp.StatusCode == 0 {
+		return extractErrors(resp.String())
 	}
+
+	resp.Discard()
 
 	return []error{}
 }
@@ -462,8 +488,6 @@ func (an *Annotations) sendData() []error {
 
 			ContentType: "application/json",
 			Body:        jsonData,
-
-			AutoDiscard: true,
 		}.Post()
 
 		if err != nil {
@@ -471,10 +495,12 @@ func (an *Annotations) sendData() []error {
 			continue
 		}
 
-		if resp.StatusCode != 200 {
-			errs = append(errs, fmt.Errorf("Service return error code %d", resp.StatusCode))
+		if resp.StatusCode > 299 || resp.StatusCode == 0 {
+			errs = append(errs, extractErrors(resp.String())...)
 			continue
 		}
+
+		resp.Discard()
 	}
 
 	return errs
@@ -509,8 +535,8 @@ func sendingLoop() {
 	}
 }
 
-func convertQueue(queue []Measurement) *mesdata {
-	result := &mesdata{}
+func convertQueue(queue []Measurement) *mesData {
+	result := &mesData{}
 
 	now := time.Now().Unix()
 
@@ -636,6 +662,77 @@ func validateAnotations(a *Annotations) error {
 func validateAnotation(a *Annotation) error {
 	if a.Title == "" {
 		return errors.New("Annotation property Title can't be empty")
+	}
+
+	return nil
+}
+
+func extractErrors(data string) []error {
+	var err error
+
+	fmt.Println(data)
+
+	switch {
+	case strings.Contains(data, "\"params\":"):
+		errStruct := &paramsErrors{}
+		err = parseErrorsData(data, errStruct)
+
+		if err != nil {
+			return []error{fmt.Errorf("Can't parse errors data: %v", err)}
+		}
+
+		return mapToErrors(errStruct.Errors.Params)
+
+	case strings.Contains(data, "\"request\":"):
+		errStruct := &requestErrors{}
+		err = parseErrorsData(data, errStruct)
+
+		if err != nil {
+			return []error{fmt.Errorf("Can't parse errors data: %v", err)}
+		}
+
+		return sliceToErrors(errStruct.Errors.Request)
+
+	case strings.Contains(data, "\"system\":"):
+		errStruct := &systemErrors{}
+		err = parseErrorsData(data, errStruct)
+
+		if err != nil {
+			return []error{fmt.Errorf("Can't parse errors data: %v", err)}
+		}
+
+		return sliceToErrors(errStruct.Errors.System)
+
+	default:
+		return []error{fmt.Errorf("Unsupported errors data")}
+	}
+}
+
+func sliceToErrors(data []string) []error {
+	var result []error
+
+	for _, e := range data {
+		result = append(result, errors.New(e))
+	}
+
+	return result
+}
+
+func mapToErrors(data map[string]string) []error {
+	var result []error
+
+	for p, e := range data {
+		result = append(result, fmt.Errorf("%s: %s", p, e))
+	}
+
+	return result
+}
+
+func parseErrorsData(data string, v interface{}) error {
+	err := json.Unmarshal([]byte(data), v)
+
+	if err != nil {
+		return err
 	}
 
 	return nil
