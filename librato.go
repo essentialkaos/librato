@@ -20,11 +20,16 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// Measurement is interface for different type of measurements
+type Measurement interface {
+	Validate() error
+}
+
 // DataSource is interface for diferent type of data source
 type DataSource interface {
 	Send() []error
 
-	getPeriod() int64
+	getPeriod() time.Duration
 	getLastSendingDate() int64
 }
 
@@ -32,12 +37,11 @@ type DataSource interface {
 
 // Metrics struct
 type Metrics struct {
-	Period       int64
-	MaxQueueSize int
-
-	queue           []*Gauge
+	period          time.Duration
+	maxQueueSize    int
 	lastSendingDate int64
 	initialized     bool
+	queue           []Measurement
 }
 
 // Annotations struct
@@ -103,6 +107,35 @@ type Gauge struct {
 	SumSquares interface{} `json:"sum_squares,omitempty"`
 }
 
+// Counter struct
+type Counter struct {
+	// Each metric has a name that is unique to its class of metrics e.g. a gauge name
+	// must be unique amongst gauges. The name identifies a metric in subsequent API
+	// calls to store/query individual measurements and can be up to 255 characters
+	// in length. Valid characters for metric names are 'A-Za-z0-9.:-_'. The metric
+	// namespace is case insensitive.
+	Name string `json:"name"`
+
+	// The numeric value of an individual measurement. Multiple formats are
+	// supported (e.g. integer, floating point, etc) but the value must be numeric.
+	Value interface{} `json:"value"`
+
+	// The epoch time at which an individual measurement occurred with a maximum
+	// resolution of seconds.
+	MeasureTime int64 `json:"measure_time,omitempty"`
+
+	// Source is an optional property that can be used to subdivide a common
+	// gauge/counter amongst multiple members of a population. For example
+	// the number of requests/second serviced by an application could be broken
+	// up amongst a group of server instances in a scale-out tier by setting
+	// the hostname as the value of source.
+	//
+	// Source names can be up to 255 characters in length and must be composed
+	// of the following 'A-Za-z0-9.:-_'. The word all is a reserved word and
+	// cannot be used as a user source. The source namespace is case insensitive.
+	Source string `json:"source,omitempty"`
+}
+
 // Annotation struct
 type Annotation struct {
 
@@ -138,6 +171,11 @@ type Annotation struct {
 	EndTime int64 `json:"end_time,omitempty"`
 }
 
+type mesdata struct {
+	Gauges   []*Gauge   `json:"gauges,omitempty"`
+	Counters []*Counter `json:"counters,omitempty"`
+}
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Access credentials
@@ -146,8 +184,8 @@ var (
 	Token = ""
 )
 
-// ApiEndpoint contians URL of Librato API endpoint
-var ApiEndpoint = "https://metrics-api.librato.com"
+// APIEndpoint contians URL of Librato API endpoint
+var APIEndpoint = "https://metrics-api.librato.com"
 
 // AsyncSending enable async data sending (enabled by default)
 var AsyncSending = true
@@ -158,14 +196,13 @@ var sources []DataSource
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // NewMetrics create new metrics struct
-func NewMetrics(period time.Duration) (*Metrics, error) {
+func NewMetrics(period time.Duration, maxQueueSize int) (*Metrics, error) {
 	metrics := &Metrics{
-		MaxQueueSize: 60,
-		Period:       timeutil.DurationToSeconds(period),
-
-		queue:           make([]*Gauge, 0),
+		maxQueueSize:    maxQueueSize,
+		period:          period,
 		lastSendingDate: -1,
 		initialized:     true,
+		queue:           make([]Measurement, 0),
 	}
 
 	err := validateMetrics(metrics)
@@ -211,55 +248,51 @@ func NewAnnotations(stream string) (*Annotations, error) {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Add adds gauge to sending queue
-func (m *Metrics) Add(g *Gauge) error {
+func (mt *Metrics) Add(m Measurement) error {
 	var err error
 
-	err = validateMetrics(m)
+	err = validateMetrics(mt)
 
 	if err != nil {
 		return err
 	}
 
-	err = validateGauge(g)
+	err = m.Validate()
 
 	if err != nil {
 		return err
 	}
 
-	if g.MeasureTime == 0 {
-		g.MeasureTime = time.Now().Unix()
-	}
+	mt.queue = append(mt.queue, m)
 
-	m.queue = append(m.queue, g)
-
-	if len(m.queue) >= m.MaxQueueSize {
-		m.Send()
+	if len(mt.queue) >= mt.maxQueueSize {
+		mt.Send()
 	}
 
 	return nil
 }
 
 // Send sends metrics data to Librato service
-func (m *Metrics) Send() []error {
+func (mt *Metrics) Send() []error {
 	if Mail == "" || Token == "" {
 		return []error{errors.New("Access credentials is not set")}
 	}
 
 	var err error
 
-	err = validateMetrics(m)
+	err = validateMetrics(mt)
 
 	if err != nil {
 		return []error{err}
 	}
 
-	if len(m.queue) == 0 {
+	if len(mt.queue) == 0 {
 		return []error{}
 	}
 
-	m.lastSendingDate = time.Now().Unix()
+	mt.lastSendingDate = time.Now().Unix()
 
-	return m.sendData()
+	return mt.sendData()
 }
 
 // Add adds new annotation to stream
@@ -319,14 +352,13 @@ func (an *Annotations) Delete() error {
 	}
 
 	resp, err := req.Request{
-		Method: req.DELETE,
-		URL:    ApiEndpoint + "/v1/annotations/" + an.stream,
+		URL: APIEndpoint + "/v1/annotations/" + an.stream,
 
 		BasicAuthUsername: Mail,
 		BasicAuthPassword: Token,
 
 		AutoDiscard: true,
-	}.Do()
+	}.Delete()
 
 	if err != nil {
 		return fmt.Errorf("Error while sending request: %s", err.Error())
@@ -341,26 +373,33 @@ func (an *Annotations) Delete() error {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// Validate validates gauge struct
+func (g *Gauge) Validate() error {
+	return validateGauge(g)
+}
+
+// Validate validates gauge struct
+func (c *Counter) Validate() error {
+	return validateCounter(c)
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 // getPeriod return sending period
-func (m *Metrics) getPeriod() int64 {
-	return m.Period
+func (mt *Metrics) getPeriod() time.Duration {
+	return mt.period
 }
 
 // getLastSendingDate return last sending date
-func (m *Metrics) getLastSendingDate() int64 {
-	return m.lastSendingDate
+func (mt *Metrics) getLastSendingDate() int64 {
+	return mt.lastSendingDate
 }
 
 // sendData send json encoded metrics data to Librato service
-func (m *Metrics) sendData() []error {
-	curQueue := m.queue
-	m.queue = make([]*Gauge, 0)
+func (mt *Metrics) sendData() []error {
+	jsonData, err := json.MarshalIndent(convertQueue(mt.queue), "", "  ")
 
-	data := struct {
-		Gauges []*Gauge `json:"gauges"`
-	}{curQueue}
-
-	jsonData, err := json.MarshalIndent(data, "", "  ")
+	mt.queue = make([]Measurement, 0)
 
 	if err != nil {
 		return []error{err}
@@ -368,7 +407,7 @@ func (m *Metrics) sendData() []error {
 
 	resp, err := req.Request{
 		Method: req.POST,
-		URL:    ApiEndpoint + "/v1/metrics/",
+		URL:    APIEndpoint + "/v1/metrics/",
 
 		BasicAuthUsername: Mail,
 		BasicAuthPassword: Token,
@@ -391,7 +430,7 @@ func (m *Metrics) sendData() []error {
 }
 
 // getPeriod return sending period
-func (an *Annotations) getPeriod() int64 {
+func (an *Annotations) getPeriod() time.Duration {
 	return 0
 }
 
@@ -416,8 +455,7 @@ func (an *Annotations) sendData() []error {
 		}
 
 		resp, err := req.Request{
-			Method: req.POST,
-			URL:    ApiEndpoint + "/v1/annotations/" + an.stream,
+			URL: APIEndpoint + "/v1/annotations/" + an.stream,
 
 			BasicAuthUsername: Mail,
 			BasicAuthPassword: Token,
@@ -426,7 +464,7 @@ func (an *Annotations) sendData() []error {
 			Body:        jsonData,
 
 			AutoDiscard: true,
-		}.Do()
+		}.Post()
 
 		if err != nil {
 			errs = append(errs, err)
@@ -455,7 +493,7 @@ func sendingLoop() {
 		now := time.Now().Unix()
 
 		for _, source := range sources {
-			period := source.getPeriod()
+			period := timeutil.DurationToSeconds(source.getPeriod())
 			lastSendTime := source.getLastSendingDate()
 
 			if period == 0 || lastSendTime == -1 {
@@ -471,9 +509,65 @@ func sendingLoop() {
 	}
 }
 
+func convertQueue(queue []Measurement) *mesdata {
+	result := &mesdata{}
+
+	now := time.Now().Unix()
+
+	for _, m := range queue {
+		switch m.(type) {
+		case *Gauge:
+			if result.Gauges == nil {
+				result.Gauges = make([]*Gauge, 0)
+			}
+
+			gauge := m.(*Gauge)
+
+			if gauge.MeasureTime != 0 {
+				gauge.MeasureTime = now
+			}
+
+			result.Gauges = append(result.Gauges, gauge)
+
+		case *Counter:
+			if result.Counters == nil {
+				result.Counters = make([]*Counter, 0)
+			}
+
+			counter := m.(*Counter)
+
+			if counter.MeasureTime != 0 {
+				counter.MeasureTime = now
+			}
+
+			result.Counters = append(result.Counters, counter)
+		}
+	}
+
+	return result
+}
+
 func validateMetrics(m *Metrics) error {
 	if !m.initialized {
 		return errors.New("Metrics struct is not initialized")
+	}
+
+	return nil
+}
+
+func validateCounter(c *Counter) error {
+	if c.Name == "" {
+		return errors.New("Counter property Name can't be empty")
+	}
+
+	if len(c.Name) > 255 {
+		return errors.New("Length of counter property Name must be 255 or fewer characters")
+	}
+
+	switch c.Value.(type) {
+	case int, int32, int64, uint, uint32, uint64, float32, float64:
+	default:
+		return errors.New("Counter property Value can't be non-numeric")
 	}
 
 	return nil

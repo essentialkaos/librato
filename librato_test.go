@@ -34,7 +34,7 @@ var _ = Suite(&LibratoSuite{})
 func (ls *LibratoSuite) TestMetricsValidation(c *C) {
 	c.Assert(validateMetrics(&Metrics{}), DeepEquals, errors.New("Metrics struct is not initialized"))
 
-	m, e := NewMetrics(time.Minute)
+	m, e := NewMetrics(time.Minute, 10)
 
 	c.Assert(m, NotNil)
 	c.Assert(e, IsNil)
