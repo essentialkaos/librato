@@ -32,7 +32,7 @@ type DataSource interface {
 
 	getPeriod() time.Duration
 	getLastSendingDate() int64
-	getErrorHandler() func(e []error)
+	execErrorHandler(errs []error)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -361,6 +361,15 @@ func (mt *Metrics) getLastSendingDate() int64 {
 	return mt.lastSendingDate
 }
 
+// execErrorHandler exec error handler if present
+func (mt *Metrics) execErrorHandler(errs []error) {
+	if mt.ErrorHandler == nil {
+		return
+	}
+
+	mt.ErrorHandler(errs)
+}
+
 // sendData send json encoded metrics data to Librato service
 func (mt *Metrics) sendData() []error {
 	data := convertQueue(mt.queue)
@@ -388,12 +397,22 @@ func sendingLoop() {
 			lastSendTime := source.getLastSendingDate()
 
 			if period == 0 || lastSendTime == -1 {
-				source.Send()
+				errs := source.Send()
+
+				if len(errs) != 0 {
+					source.execErrorHandler(errs)
+				}
+
 				continue
 			}
 
 			if period+lastSendTime < now {
-				source.Send()
+				errs := source.Send()
+
+				if len(errs) != 0 {
+					source.execErrorHandler(errs)
+				}
+
 				continue
 			}
 		}
@@ -560,8 +579,6 @@ func validateAnotation(a *Annotation) error {
 // extractErrors extracts error descriptions from API response
 func extractErrors(data string) []error {
 	var err error
-
-	fmt.Println(data)
 
 	switch {
 	case strings.Contains(data, "\"params\":"):
