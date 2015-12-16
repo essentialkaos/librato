@@ -32,6 +32,7 @@ type DataSource interface {
 
 	getPeriod() time.Duration
 	getLastSendingDate() int64
+	getErrorHandler() func(e []error)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -43,6 +44,9 @@ type Metrics struct {
 	lastSendingDate int64
 	initialized     bool
 	queue           []Measurement
+
+	// Function executed if we have errors while sending data to Librato
+	ErrorHandler func(errs []error)
 }
 
 // Gauge struct
@@ -368,6 +372,7 @@ func (mt *Metrics) sendData() []error {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+// sendingLoop is function used for async sending data from data sources
 func sendingLoop() {
 	for {
 		time.Sleep(time.Second)
@@ -395,6 +400,8 @@ func sendingLoop() {
 	}
 }
 
+// convertQueue convert slice with measurements to struct
+// with counters and gauges slices
 func convertQueue(queue []Measurement) *mesData {
 	result := &mesData{}
 
@@ -433,6 +440,7 @@ func convertQueue(queue []Measurement) *mesData {
 	return result
 }
 
+// execRequest create and execute request to API
 func execRequest(method, url string, data interface{}) []error {
 	request := req.Request{
 		Method: method,
@@ -463,6 +471,7 @@ func execRequest(method, url string, data interface{}) []error {
 	return nil
 }
 
+// validateMetrics validate metrics struct
 func validateMetrics(m *Metrics) error {
 	if !m.initialized {
 		return errors.New("Metrics struct is not initialized")
@@ -471,6 +480,7 @@ func validateMetrics(m *Metrics) error {
 	return nil
 }
 
+// validateCounter validate counter struct
 func validateCounter(c *Counter) error {
 	if c.Name == "" {
 		return errors.New("Counter property Name can't be empty")
@@ -489,6 +499,7 @@ func validateCounter(c *Counter) error {
 	return nil
 }
 
+// validateGauge validate gauge struct
 func validateGauge(g *Gauge) error {
 	if g.Name == "" {
 		return errors.New("Gauge property Name can't be empty")
@@ -537,6 +548,7 @@ func validateGauge(g *Gauge) error {
 	return nil
 }
 
+// validateAnotation validate annotation struct
 func validateAnotation(a *Annotation) error {
 	if a.Title == "" {
 		return errors.New("Annotation property Title can't be empty")
@@ -545,6 +557,7 @@ func validateAnotation(a *Annotation) error {
 	return nil
 }
 
+// extractErrors extracts error descriptions from API response
 func extractErrors(data string) []error {
 	var err error
 
@@ -586,6 +599,7 @@ func extractErrors(data string) []error {
 	}
 }
 
+// sliceToErrors convert slice with strings to slice with errors
 func sliceToErrors(data []string) []error {
 	var result []error
 
@@ -596,6 +610,7 @@ func sliceToErrors(data []string) []error {
 	return result
 }
 
+// mapToErrors convert map with prop name and description to slice with errors
 func mapToErrors(data map[string]string) []error {
 	var result []error
 
@@ -606,6 +621,7 @@ func mapToErrors(data map[string]string) []error {
 	return result
 }
 
+// parseErrorsData parse error json data to struct
 func parseErrorsData(data string, v interface{}) error {
 	err := json.Unmarshal([]byte(data), v)
 
