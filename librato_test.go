@@ -40,22 +40,6 @@ func (ls *LibratoSuite) TestMetricsValidation(c *C) {
 	c.Assert(e, IsNil)
 }
 
-func (ls *LibratoSuite) TestAnnotaionsValidation(c *C) {
-	c.Assert(validateAnotations(&Annotations{}), DeepEquals, errors.New("Annotations struct is not initialized"))
-
-	a, e := NewAnnotations("")
-
-	c.Assert(a, IsNil)
-	c.Assert(e, NotNil)
-
-	c.Assert(e, DeepEquals, errors.New("Annotations must have non-empty property stream"))
-
-	a, e = NewAnnotations("test")
-
-	c.Assert(a, NotNil)
-	c.Assert(e, IsNil)
-}
-
 func (ls *LibratoSuite) TestGaugeValidation(c *C) {
 	c.Assert(validateGauge(&Gauge{}), DeepEquals, errors.New("Gauge property Name can't be empty"))
 	c.Assert(validateGauge(&Gauge{Name: rand.String(256)}), DeepEquals, errors.New("Length of gauge property Name must be 255 or fewer characters"))

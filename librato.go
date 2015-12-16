@@ -45,13 +45,6 @@ type Metrics struct {
 	queue           []Measurement
 }
 
-// Annotations struct
-type Annotations struct {
-	stream      string
-	queue       []*Annotation
-	initialized bool
-}
-
 // Gauge struct
 type Gauge struct {
 
@@ -214,15 +207,12 @@ var (
 // APIEndpoint contians URL of Librato API endpoint
 var APIEndpoint = "https://metrics-api.librato.com"
 
-// AsyncSending enable async data sending (enabled by default)
-var AsyncSending = true
-
 // List of sources
 var sources []DataSource
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-// NewMetrics create new metrics struct
+// NewMetrics create new metrics struct for async metrics sending
 func NewMetrics(period time.Duration, maxQueueSize int) (*Metrics, error) {
 	metrics := &Metrics{
 		maxQueueSize:    maxQueueSize,
@@ -238,7 +228,7 @@ func NewMetrics(period time.Duration, maxQueueSize int) (*Metrics, error) {
 		return nil, err
 	}
 
-	if sources == nil && AsyncSending {
+	if sources == nil {
 		sources = make([]DataSource, 0)
 		go sendingLoop()
 	}
@@ -248,28 +238,49 @@ func NewMetrics(period time.Duration, maxQueueSize int) (*Metrics, error) {
 	return metrics, nil
 }
 
-// NewAnnotations create new annotations struct
-func NewAnnotations(stream string) (*Annotations, error) {
-	annotations := &Annotations{
-		stream:      stream,
-		queue:       make([]*Annotation, 0),
-		initialized: true,
-	}
-
-	err := validateAnotations(annotations)
+// AddMetric synchronously send metric to librato
+func AddMetric(m Measurement) []error {
+	err := m.Validate()
 
 	if err != nil {
-		return nil, err
+		return []error{err}
 	}
 
-	if sources == nil && AsyncSending {
-		sources = make([]DataSource, 0)
-		go sendingLoop()
+	data := &mesData{}
+
+	switch m.(type) {
+	case *Gauge:
+		data.Gauges = append(data.Gauges, m.(*Gauge))
+
+	case *Counter:
+		data.Counters = append(data.Counters, m.(*Counter))
 	}
 
-	sources = append(sources, annotations)
+	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
+}
 
-	return annotations, nil
+// AddAnnotation synchronously send annotation to librato
+func AddAnnotation(stream string, a *Annotation) []error {
+	if stream == "" {
+		return []error{errors.New("Stream name can't be empty")}
+	}
+
+	err := validateAnotation(a)
+
+	if err != nil {
+		return []error{err}
+	}
+
+	return execRequest(req.POST, APIEndpoint+"/v1/annotations/"+stream, a)
+}
+
+// DeleteAnnotations synchronously remove annotation stream on librato
+func DeleteAnnotations(stream string) []error {
+	if stream == "" {
+		return []error{errors.New("Stream name can't be empty")}
+	}
+
+	return execRequest(req.DELETE, APIEndpoint+"/v1/annotations/"+stream, nil)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -322,82 +333,6 @@ func (mt *Metrics) Send() []error {
 	return mt.sendData()
 }
 
-// Add adds new annotation to stream
-func (an *Annotations) Add(a *Annotation) error {
-	var err error
-
-	err = validateAnotations(an)
-
-	if err != nil {
-		return err
-	}
-
-	err = validateAnotation(a)
-
-	if err != nil {
-		return err
-	}
-
-	an.queue = append(an.queue, a)
-
-	return nil
-}
-
-// Send sends annotations data to Librato service
-func (an *Annotations) Send() []error {
-	if Mail == "" || Token == "" {
-		return []error{errors.New("Access credentials is not set")}
-	}
-
-	var err error
-
-	err = validateAnotations(an)
-
-	if err != nil {
-		return []error{err}
-	}
-
-	if len(an.queue) == 0 {
-		return []error{}
-	}
-
-	return an.sendData()
-}
-
-// Delete remove annotations stream
-func (an *Annotations) Delete() []error {
-	if Mail == "" || Token == "" {
-		return []error{errors.New("Access credentials is not set")}
-	}
-
-	var err error
-
-	err = validateAnotations(an)
-
-	if err != nil {
-		return []error{err}
-	}
-
-	resp, err := req.Request{
-		URL: APIEndpoint + "/v1/annotations/" + an.stream,
-
-		BasicAuthUsername: Mail,
-		BasicAuthPassword: Token,
-	}.Delete()
-
-	if err != nil {
-		return []error{fmt.Errorf("Error while sending request: %s", err.Error())}
-	}
-
-	if resp.StatusCode > 299 || resp.StatusCode == 0 {
-		return extractErrors(resp.String())
-	}
-
-	resp.Discard()
-
-	return nil
-}
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Validate validates gauge struct
@@ -424,86 +359,11 @@ func (mt *Metrics) getLastSendingDate() int64 {
 
 // sendData send json encoded metrics data to Librato service
 func (mt *Metrics) sendData() []error {
-	jsonData, err := json.MarshalIndent(convertQueue(mt.queue), "", "  ")
-
-	if err != nil {
-		return []error{}
-	}
+	data := convertQueue(mt.queue)
 
 	mt.queue = make([]Measurement, 0)
 
-	resp, err := req.Request{
-		URL: APIEndpoint + "/v1/metrics/",
-
-		BasicAuthUsername: Mail,
-		BasicAuthPassword: Token,
-
-		ContentType: "application/json",
-		Body:        jsonData,
-	}.Post()
-
-	if err != nil {
-		return []error{err}
-	}
-
-	if resp.StatusCode > 299 || resp.StatusCode == 0 {
-		return extractErrors(resp.String())
-	}
-
-	resp.Discard()
-
-	return []error{}
-}
-
-// getPeriod return sending period
-func (an *Annotations) getPeriod() time.Duration {
-	return 0
-}
-
-// getLastSendingDate return last sending date
-func (an *Annotations) getLastSendingDate() int64 {
-	return -1
-}
-
-// sendData send json encoded annotations data to Librato service
-func (an *Annotations) sendData() []error {
-	curQueue := an.queue
-	an.queue = make([]*Annotation, 0)
-
-	var errs []error
-
-	for _, a := range curQueue {
-		jsonData, err := json.MarshalIndent(a, "", "  ")
-
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		resp, err := req.Request{
-			URL: APIEndpoint + "/v1/annotations/" + an.stream,
-
-			BasicAuthUsername: Mail,
-			BasicAuthPassword: Token,
-
-			ContentType: "application/json",
-			Body:        jsonData,
-		}.Post()
-
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		if resp.StatusCode > 299 || resp.StatusCode == 0 {
-			errs = append(errs, extractErrors(resp.String())...)
-			continue
-		}
-
-		resp.Discard()
-	}
-
-	return errs
+	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -571,6 +431,36 @@ func convertQueue(queue []Measurement) *mesData {
 	}
 
 	return result
+}
+
+func execRequest(method, url string, data interface{}) []error {
+	request := req.Request{
+		Method: method,
+		URL:    url,
+
+		BasicAuthUsername: Mail,
+		BasicAuthPassword: Token,
+
+		ContentType: "application/json",
+	}
+
+	if data != nil {
+		request.Body = data
+	}
+
+	resp, err := request.Do()
+
+	if err != nil {
+		return []error{err}
+	}
+
+	if resp.StatusCode > 299 || resp.StatusCode == 0 {
+		return extractErrors(resp.String())
+	}
+
+	resp.Discard()
+
+	return nil
 }
 
 func validateMetrics(m *Metrics) error {
@@ -642,18 +532,6 @@ func validateGauge(g *Gauge) error {
 	case int, int32, int64, uint, uint32, uint64, float32, float64, nil:
 	default:
 		return errors.New("Gauge property SumSquares can't be non-numeric")
-	}
-
-	return nil
-}
-
-func validateAnotations(a *Annotations) error {
-	if !a.initialized {
-		return errors.New("Annotations struct is not initialized")
-	}
-
-	if a.stream == "" {
-		return errors.New("Annotations must have non-empty property stream")
 	}
 
 	return nil
