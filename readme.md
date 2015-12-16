@@ -20,8 +20,10 @@ package main
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 import (
-  "github.com/essentialkaos/librato"
   "os"
+  "time"
+
+  "github.com/essentialkaos/librato"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -82,6 +84,32 @@ func main() {
   if len(errs) != 0 {
     os.Exit(1)
   }
+
+  // Create struct for async sending metrics data
+  // With this preferences metrics will be sended to Librato once
+  // a minute or if queue size reached 60 elements
+  metrics, err := librato.NewMetrics(time.Minute, 60)
+
+  if err != nil {
+    os.Exit(1)
+  }
+
+  metrics.Add(
+    &librato.Counter{
+      Name:  "service:random1",
+      Value: 345,
+    },
+  )
+
+  metrics.Add(
+    &librato.Gauge{
+      Name:  "service:random2",
+      Value: 45.2,
+    },
+  )
+
+  // Force sending metrics before exit
+  metrics.Send()
 }
 ```
 
