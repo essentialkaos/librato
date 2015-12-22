@@ -12,12 +12,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/essentialkaos/ek/req"
 	"github.com/essentialkaos/ek/timeutil"
 )
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+const VERSION = "1.0"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -213,6 +218,10 @@ var APIEndpoint = "https://metrics-api.librato.com"
 
 // List of sources
 var sources []DataSource
+
+// User agent
+var userAgent = fmt.Sprintf("ek-librato/%s (go; %s; %s-%s)",
+	VERSION, runtime.Version(), runtime.GOARCH, runtime.GOOS)
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -469,6 +478,7 @@ func execRequest(method, url string, data interface{}) []error {
 		BasicAuthPassword: Token,
 
 		ContentType: "application/json",
+		UserAgent:   userAgent,
 	}
 
 	if data != nil {
