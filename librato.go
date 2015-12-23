@@ -376,7 +376,11 @@ func (mt *Metrics) Send() []error {
 
 	mt.queue = make([]Measurement, 0)
 
-	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
+	errs := execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
+
+	mt.execErrorHandler(errs)
+
+	return errs
 }
 
 // Send sends metrics data to Librato service
@@ -394,8 +398,11 @@ func (cl *Collector) Send() []error {
 	cl.lastSendingDate = time.Now().Unix()
 
 	data := convertMeasurementSlice(ms)
+	errs := execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 
-	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
+	cl.execErrorHandler(errs)
+
+	return errs
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -424,7 +431,7 @@ func (mt *Metrics) getLastSendingDate() int64 {
 
 // execErrorHandler exec error handler if present
 func (mt *Metrics) execErrorHandler(errs []error) {
-	if mt.ErrorHandler == nil {
+	if mt.ErrorHandler == nil || len(errs) == 0 {
 		return
 	}
 
@@ -443,7 +450,7 @@ func (cl *Collector) getLastSendingDate() int64 {
 
 // execErrorHandler exec error handler if present
 func (cl *Collector) execErrorHandler(errs []error) {
-	if cl.ErrorHandler == nil {
+	if cl.ErrorHandler == nil || len(errs) == 0 {
 		return
 	}
 
@@ -467,24 +474,13 @@ func sendingLoop() {
 			period := timeutil.DurationToSeconds(source.getPeriod())
 			lastSendTime := source.getLastSendingDate()
 
-			if period == 0 || lastSendTime == -1 {
-				errs := source.Send()
-
-				if len(errs) != 0 {
-					source.execErrorHandler(errs)
-				}
-
+			if period == 0 || lastSendTime <= 0 {
+				go source.Send()
 				continue
 			}
 
-			if period+lastSendTime < now {
-				errs := source.Send()
-
-				if len(errs) != 0 {
-					source.execErrorHandler(errs)
-				}
-
-				continue
+			if period+lastSendTime <= now {
+				go source.Send()
 			}
 		}
 	}
@@ -541,6 +537,8 @@ func execRequest(method, url string, data interface{}) []error {
 
 		ContentType: "application/json",
 		UserAgent:   userAgent,
+
+		Close: true,
 	}
 
 	if data != nil {
