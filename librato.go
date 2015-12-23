@@ -22,7 +22,8 @@ import (
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-const VERSION = "1.0"
+// VERSION contains current version of librato package and used as part of User-Agent
+const VERSION = "1.1"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -49,6 +50,16 @@ type Metrics struct {
 	lastSendingDate int64
 	initialized     bool
 	queue           []Measurement
+
+	// Function executed if we have errors while sending data to Librato
+	ErrorHandler func(errs []error)
+}
+
+// Collector struct
+type Collector struct {
+	period          time.Duration
+	lastSendingDate int64
+	collectFunc     func() []Measurement
 
 	// Function executed if we have errors while sending data to Librato
 	ErrorHandler func(errs []error)
@@ -251,6 +262,24 @@ func NewMetrics(period time.Duration, maxQueueSize int) (*Metrics, error) {
 	return metrics, nil
 }
 
+// NewCollector create new metrics struct for async metrics collecting and sending
+func NewCollector(period time.Duration, collectFunc func() []Measurement) *Collector {
+	collector := &Collector{
+		period:          period,
+		lastSendingDate: -1,
+		collectFunc:     collectFunc,
+	}
+
+	if sources == nil {
+		sources = make([]DataSource, 0)
+		go sendingLoop()
+	}
+
+	sources = append(sources, collector)
+
+	return collector
+}
+
 // AddMetric synchronously send metric to librato
 func AddMetric(m Measurement) []error {
 	err := m.Validate()
@@ -343,7 +372,30 @@ func (mt *Metrics) Send() []error {
 
 	mt.lastSendingDate = time.Now().Unix()
 
-	return mt.sendData()
+	data := convertMeasurementSlice(mt.queue)
+
+	mt.queue = make([]Measurement, 0)
+
+	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
+}
+
+// Send sends metrics data to Librato service
+func (cl *Collector) Send() []error {
+	if Mail == "" || Token == "" {
+		return []error{errors.New("Access credentials is not set")}
+	}
+
+	ms := cl.collectFunc()
+
+	if ms == nil || len(ms) == 0 {
+		return []error{}
+	}
+
+	cl.lastSendingDate = time.Now().Unix()
+
+	data := convertMeasurementSlice(ms)
+
+	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -379,13 +431,23 @@ func (mt *Metrics) execErrorHandler(errs []error) {
 	mt.ErrorHandler(errs)
 }
 
-// sendData send json encoded metrics data to Librato service
-func (mt *Metrics) sendData() []error {
-	data := convertQueue(mt.queue)
+// getPeriod return sending period
+func (cl *Collector) getPeriod() time.Duration {
+	return cl.period
+}
 
-	mt.queue = make([]Measurement, 0)
+// getLastSendingDate return last sending date
+func (cl *Collector) getLastSendingDate() int64 {
+	return cl.lastSendingDate
+}
 
-	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
+// execErrorHandler exec error handler if present
+func (cl *Collector) execErrorHandler(errs []error) {
+	if cl.ErrorHandler == nil {
+		return
+	}
+
+	cl.ErrorHandler(errs)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -428,9 +490,9 @@ func sendingLoop() {
 	}
 }
 
-// convertQueue convert slice with measurements to struct
+// convertMeasurementSlice convert slice with measurements to struct
 // with counters and gauges slices
-func convertQueue(queue []Measurement) *mesData {
+func convertMeasurementSlice(queue []Measurement) *mesData {
 	result := &mesData{}
 
 	now := time.Now().Unix()
