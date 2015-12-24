@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/essentialkaos/ek/req"
-	"github.com/essentialkaos/ek/timeutil"
+	"pkg.re/essentialkaos/ek.v1/req"
+	"pkg.re/essentialkaos/ek.v1/timeutil"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
