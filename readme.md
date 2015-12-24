@@ -1,4 +1,4 @@
-### Librato [![GoDoc](https://godoc.org/github.com/essentialkaos/librato?status.svg)](https://godoc.org/github.com/essentialkaos/librato)
+### Librato [![GoDoc](https://godoc.org/pkg.re/essentialkaos/librato.v1?status.svg)](https://godoc.org/pkg.re/essentialkaos/librato.v1)
 
 Package for working with [Librato Metrics](https://www.librato.com) API from go code.
 
@@ -23,7 +23,7 @@ import (
   "os"
   "time"
 
-  "github.com/essentialkaos/librato"
+  "pkg.re/essentialkaos/librato.v1"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
