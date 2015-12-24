@@ -5,7 +5,7 @@ Package for working with [Librato Metrics](https://www.librato.com) API from go 
 #### Installation
 
 ````
-go get github.com/essentialkaos/librato
+go get pkg.re/essentialkaos/librato.v1
 ````
 
 #### Status

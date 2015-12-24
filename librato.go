@@ -16,14 +16,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/essentialkaos/ek/req"
-	"github.com/essentialkaos/ek/timeutil"
+	"pkg.re/essentialkaos/ek.v1/req"
+	"pkg.re/essentialkaos/ek.v1/timeutil"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "1.1"
+const VERSION = "1.2.1"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
