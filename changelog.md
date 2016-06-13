@@ -1,5 +1,12 @@
 ## Changelog
 
+#### v2.0.0
+
+* Added usage examples
+* Using values instead pointers for measurements (gauge/counter) structs
+* Now `librato.AddMetrics` supports sending many metrics at once
+* Code refactoring
+
 #### v1.2.1
 
 * Added pkg.re usage

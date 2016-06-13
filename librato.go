@@ -23,7 +23,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "1.2.1"
+const VERSION = "2.0.0"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -187,9 +187,9 @@ type Annotation struct {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-type mesData struct {
-	Gauges   []*Gauge   `json:"gauges,omitempty"`
-	Counters []*Counter `json:"counters,omitempty"`
+type measurements struct {
+	Gauges   []Gauge   `json:"gauges,omitempty"`
+	Counters []Counter `json:"counters,omitempty"`
 }
 
 type paramsErrorMap struct {
@@ -241,9 +241,9 @@ func NewMetrics(period time.Duration, maxQueueSize int) (*Metrics, error) {
 	metrics := &Metrics{
 		maxQueueSize:    maxQueueSize,
 		period:          period,
-		lastSendingDate: -1,
 		initialized:     true,
 		queue:           make([]Measurement, 0),
+		lastSendingDate: -1,
 	}
 
 	err := validateMetrics(metrics)
@@ -266,8 +266,8 @@ func NewMetrics(period time.Duration, maxQueueSize int) (*Metrics, error) {
 func NewCollector(period time.Duration, collectFunc func() []Measurement) *Collector {
 	collector := &Collector{
 		period:          period,
-		lastSendingDate: -1,
 		collectFunc:     collectFunc,
+		lastSendingDate: -1,
 	}
 
 	if sources == nil {
@@ -281,28 +281,38 @@ func NewCollector(period time.Duration, collectFunc func() []Measurement) *Colle
 }
 
 // AddMetric synchronously send metric to librato
-func AddMetric(m Measurement) []error {
-	err := m.Validate()
+func AddMetric(m ...Measurement) []error {
+	data := &measurements{}
 
-	if err != nil {
-		return []error{err}
+	var errs []error
+
+	for _, metric := range m {
+		err := metric.Validate()
+
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
 
-	data := &mesData{}
+	if len(errs) != 0 {
+		return errs
+	}
 
-	switch m.(type) {
-	case *Gauge:
-		data.Gauges = append(data.Gauges, m.(*Gauge))
+	for _, metric := range m {
+		switch metric.(type) {
+		case Gauge:
+			data.Gauges = append(data.Gauges, metric.(Gauge))
 
-	case *Counter:
-		data.Counters = append(data.Counters, m.(*Counter))
+		case Counter:
+			data.Counters = append(data.Counters, metric.(Counter))
+		}
 	}
 
 	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 }
 
 // AddAnnotation synchronously send annotation to librato
-func AddAnnotation(stream string, a *Annotation) []error {
+func AddAnnotation(stream string, a Annotation) []error {
 	if stream == "" {
 		return []error{errors.New("Stream name can't be empty")}
 	}
@@ -328,7 +338,7 @@ func DeleteAnnotations(stream string) []error {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Add adds gauge to sending queue
-func (mt *Metrics) Add(m Measurement) error {
+func (mt *Metrics) Add(m ...Measurement) error {
 	var err error
 
 	err = validateMetrics(mt)
@@ -337,13 +347,15 @@ func (mt *Metrics) Add(m Measurement) error {
 		return err
 	}
 
-	err = m.Validate()
+	for _, metric := range m {
+		err = metric.Validate()
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
-	mt.queue = append(mt.queue, m)
+	mt.queue = append(mt.queue, m...)
 
 	if len(mt.queue) >= mt.maxQueueSize {
 		mt.Send()
@@ -391,7 +403,7 @@ func (cl *Collector) Send() []error {
 
 	ms := cl.collectFunc()
 
-	if ms == nil || len(ms) == 0 {
+	if len(ms) == 0 {
 		return []error{}
 	}
 
@@ -408,12 +420,12 @@ func (cl *Collector) Send() []error {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // Validate validates gauge struct
-func (g *Gauge) Validate() error {
+func (g Gauge) Validate() error {
 	return validateGauge(g)
 }
 
 // Validate validates gauge struct
-func (c *Counter) Validate() error {
+func (c Counter) Validate() error {
 	return validateCounter(c)
 }
 
@@ -488,19 +500,19 @@ func sendingLoop() {
 
 // convertMeasurementSlice convert slice with measurements to struct
 // with counters and gauges slices
-func convertMeasurementSlice(queue []Measurement) *mesData {
-	result := &mesData{}
+func convertMeasurementSlice(queue []Measurement) *measurements {
+	result := &measurements{}
 
 	now := time.Now().Unix()
 
 	for _, m := range queue {
 		switch m.(type) {
-		case *Gauge:
+		case Gauge:
 			if result.Gauges == nil {
-				result.Gauges = make([]*Gauge, 0)
+				result.Gauges = make([]Gauge, 0)
 			}
 
-			gauge := m.(*Gauge)
+			gauge := m.(Gauge)
 
 			if gauge.MeasureTime != 0 {
 				gauge.MeasureTime = now
@@ -508,12 +520,12 @@ func convertMeasurementSlice(queue []Measurement) *mesData {
 
 			result.Gauges = append(result.Gauges, gauge)
 
-		case *Counter:
+		case Counter:
 			if result.Counters == nil {
-				result.Counters = make([]*Counter, 0)
+				result.Counters = make([]Counter, 0)
 			}
 
-			counter := m.(*Counter)
+			counter := m.(Counter)
 
 			if counter.MeasureTime != 0 {
 				counter.MeasureTime = now
@@ -570,7 +582,7 @@ func validateMetrics(m *Metrics) error {
 }
 
 // validateCounter validate counter struct
-func validateCounter(c *Counter) error {
+func validateCounter(c Counter) error {
 	if c.Name == "" {
 		return errors.New("Counter property Name can't be empty")
 	}
@@ -589,7 +601,7 @@ func validateCounter(c *Counter) error {
 }
 
 // validateGauge validate gauge struct
-func validateGauge(g *Gauge) error {
+func validateGauge(g Gauge) error {
 	if g.Name == "" {
 		return errors.New("Gauge property Name can't be empty")
 	}
@@ -638,7 +650,7 @@ func validateGauge(g *Gauge) error {
 }
 
 // validateAnotation validate annotation struct
-func validateAnotation(a *Annotation) error {
+func validateAnotation(a Annotation) error {
 	if a.Title == "" {
 		return errors.New("Annotation property Title can't be empty")
 	}
