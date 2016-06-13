@@ -26,6 +26,8 @@ func main() {
 }
 
 func collectSomeMetrics() []librato.Measurement {
+	fmt.Println("Metrics collected")
+
 	return []librato.Measurement{
 		librato.Gauge{
 			Name:  "example:gauge_1",
