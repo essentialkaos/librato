@@ -35,17 +35,6 @@ func main() {
 			},
 		)
 
-		// Force sending metrics before exit
-		errs := metrics.Send()
-
-		if len(errs) != 0 {
-			fmt.Println("Errors:")
-
-			for _, err := range errs {
-				fmt.Printf("  %v\n", err)
-			}
-		}
-
 		time.Sleep(15 * time.Second)
 	}
 }
