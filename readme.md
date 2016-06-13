@@ -15,10 +15,6 @@ go get pkg.re/essentialkaos/librato.v2
 * [Async Sending](examples/async_example.go)
 * [Annotations](examples/annotations_example.go)
 
-### Status
-
-This package is unnder heavy construction, please do not use in production code.
-
 ### License
 
 [EKOL](https://essentialkaos.com/ekol)
