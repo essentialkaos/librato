@@ -1,4 +1,4 @@
-## Librato [![GoDoc](https://godoc.org/pkg.re/essentialkaos/librato.v2?status.svg)](https://godoc.org/pkg.re/essentialkaos/librato.v2) [![Build Status](https://travis-ci.org/essentialkaos/librato.svg?branch=master)](https://travis-ci.org/essentialkaos/librato)
+# Librato [![GoDoc](https://godoc.org/pkg.re/essentialkaos/librato.v2?status.svg)](https://godoc.org/pkg.re/essentialkaos/librato.v2) [![Build Status](https://travis-ci.org/essentialkaos/librato.svg?branch=master)](https://travis-ci.org/essentialkaos/librato)
 
 Package for working with [Librato Metrics](https://www.librato.com) API from go code.
 
