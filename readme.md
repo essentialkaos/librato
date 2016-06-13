@@ -2,6 +2,10 @@
 
 Package for working with [Librato Metrics](https://www.librato.com) API from go code.
 
+* [Installation](#installation)
+* [Examples](#examples)
+* [License](#license)
+
 ### Installation
 
 ````
