@@ -10,7 +10,7 @@ os:
   - linux
 
 before_install:
-  - go get pkg.re/essentialkaos/ek.v1
+  - go get pkg.re/essentialkaos/ek.v2
 
 script:
   - go build examples/annotations_example.go
