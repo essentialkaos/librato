@@ -1,5 +1,14 @@
 ## Changelog
 
+#### v2.0.2
+
+* Added global prefix feature
+* Minor improvements
+
+#### v2.0.1
+
+* EK package updated to latest version
+
 #### v2.0.0
 
 * Added usage examples

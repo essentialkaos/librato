@@ -23,7 +23,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "2.0.1"
+const VERSION = "2.0.2"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -224,6 +224,9 @@ var (
 	Token = ""
 )
 
+// Global prefix which will be used for all metrics
+var Prefix = ""
+
 // APIEndpoint contians URL of Librato API endpoint
 var APIEndpoint = "https://metrics-api.librato.com"
 
@@ -282,7 +285,7 @@ func NewCollector(period time.Duration, collectFunc func() []Measurement) *Colle
 
 // AddMetric synchronously send metric to librato
 func AddMetric(m ...Measurement) []error {
-	data := &measurements{}
+	data := measurements{}
 
 	var errs []error
 
@@ -307,6 +310,8 @@ func AddMetric(m ...Measurement) []error {
 			data.Counters = append(data.Counters, metric.(Counter))
 		}
 	}
+
+	appendGlobalPrefix(data)
 
 	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 }
@@ -387,6 +392,8 @@ func (mt *Metrics) Send() []error {
 	data := convertMeasurementSlice(mt.queue)
 
 	mt.queue = make([]Measurement, 0)
+
+	appendGlobalPrefix(data)
 
 	errs := execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 
@@ -500,10 +507,8 @@ func sendingLoop() {
 
 // convertMeasurementSlice convert slice with measurements to struct
 // with counters and gauges slices
-func convertMeasurementSlice(queue []Measurement) *measurements {
-	result := &measurements{}
-
-	now := time.Now().Unix()
+func convertMeasurementSlice(queue []Measurement) measurements {
+	result := measurements{}
 
 	for _, m := range queue {
 		switch m.(type) {
@@ -514,10 +519,6 @@ func convertMeasurementSlice(queue []Measurement) *measurements {
 
 			gauge := m.(Gauge)
 
-			if gauge.MeasureTime != 0 {
-				gauge.MeasureTime = now
-			}
-
 			result.Gauges = append(result.Gauges, gauge)
 
 		case Counter:
@@ -527,15 +528,26 @@ func convertMeasurementSlice(queue []Measurement) *measurements {
 
 			counter := m.(Counter)
 
-			if counter.MeasureTime != 0 {
-				counter.MeasureTime = now
-			}
-
 			result.Counters = append(result.Counters, counter)
 		}
 	}
 
 	return result
+}
+
+// appendGlobalPrefix append global prefix to each measurement
+func appendGlobalPrefix(data measurements) {
+	if Prefix == "" {
+		return
+	}
+
+	for _, c := range data.Counters {
+		c.Name = Prefix + c.Name
+	}
+
+	for _, g := range data.Gauges {
+		g.Name = Prefix + g.Name
+	}
 }
 
 // execRequest create and execute request to API
