@@ -1,9 +1,8 @@
 ## Changelog
 
-#### v2.0.2
+#### v2.0.3
 
-* Added global prefix feature
-* Minor improvements
+* Global prefix feature removed
 
 #### v2.0.1
 
