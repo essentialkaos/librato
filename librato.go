@@ -23,7 +23,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "2.0.3"
+const VERSION = "2.0.4"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -654,6 +654,11 @@ func validateAnotation(a Annotation) error {
 // extractErrors extracts error descriptions from API response
 func extractErrors(data string) []error {
 	var err error
+
+	// Data doesn't looks like JSON. Return raw data
+	if !strings.HasPrefix(data, "{") {
+		return []error{fmt.Errorf(data)}
+	}
 
 	switch {
 	case strings.Contains(data, "\"params\":"):
