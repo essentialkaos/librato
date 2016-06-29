@@ -1,5 +1,9 @@
 ## Changelog
 
+#### v2.0.4
+
+* Improved error handling
+
 #### v2.0.3
 
 * Global prefix feature removed
