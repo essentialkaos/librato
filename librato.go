@@ -23,7 +23,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "2.0.2"
+const VERSION = "2.0.3"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -311,8 +311,6 @@ func AddMetric(m ...Measurement) []error {
 		}
 	}
 
-	appendGlobalPrefix(data)
-
 	return execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 }
 
@@ -392,8 +390,6 @@ func (mt *Metrics) Send() []error {
 	data := convertMeasurementSlice(mt.queue)
 
 	mt.queue = make([]Measurement, 0)
-
-	appendGlobalPrefix(data)
 
 	errs := execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 
@@ -533,21 +529,6 @@ func convertMeasurementSlice(queue []Measurement) measurements {
 	}
 
 	return result
-}
-
-// appendGlobalPrefix append global prefix to each measurement
-func appendGlobalPrefix(data measurements) {
-	if Prefix == "" {
-		return
-	}
-
-	for _, c := range data.Counters {
-		c.Name = Prefix + c.Name
-	}
-
-	for _, g := range data.Gauges {
-		g.Name = Prefix + g.Name
-	}
 }
 
 // execRequest create and execute request to API
