@@ -1,5 +1,11 @@
 ## Changelog
 
+#### v2.0.5
+
+* Fixed error handling
+* Improved error handling
+* Code refactoring
+
 #### v2.0.4
 
 * Improved error handling

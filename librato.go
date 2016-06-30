@@ -23,7 +23,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "2.0.4"
+const VERSION = "2.1.0"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -193,7 +193,7 @@ type measurements struct {
 }
 
 type paramsErrorMap struct {
-	Params map[string]string `json:"params"`
+	Params map[string][]string `json:"params"`
 }
 
 type requestErrorSlice struct {
@@ -236,6 +236,12 @@ var sources []DataSource
 // User agent
 var userAgent = fmt.Sprintf("ek-librato/%s (go; %s; %s-%s)",
 	VERSION, runtime.Version(), runtime.GOARCH, runtime.GOOS)
+
+// Some default errors
+var (
+	errAccessCredentials = []error{errors.New("Access credentials is not set")}
+	errEmptyStreamName   = []error{errors.New("Stream name can't be empty")}
+)
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -317,7 +323,7 @@ func AddMetric(m ...Measurement) []error {
 // AddAnnotation synchronously send annotation to librato
 func AddAnnotation(stream string, a Annotation) []error {
 	if stream == "" {
-		return []error{errors.New("Stream name can't be empty")}
+		return errAccessCredentials
 	}
 
 	err := validateAnotation(a)
@@ -332,7 +338,7 @@ func AddAnnotation(stream string, a Annotation) []error {
 // DeleteAnnotations synchronously remove annotation stream on librato
 func DeleteAnnotations(stream string) []error {
 	if stream == "" {
-		return []error{errors.New("Stream name can't be empty")}
+		return errEmptyStreamName
 	}
 
 	return execRequest(req.DELETE, APIEndpoint+"/v1/annotations/"+stream, nil)
@@ -370,19 +376,17 @@ func (mt *Metrics) Add(m ...Measurement) error {
 // Send sends metrics data to Librato service
 func (mt *Metrics) Send() []error {
 	if Mail == "" || Token == "" {
-		return []error{errors.New("Access credentials is not set")}
+		return errAccessCredentials
 	}
 
-	var err error
-
-	err = validateMetrics(mt)
+	err := validateMetrics(mt)
 
 	if err != nil {
 		return []error{err}
 	}
 
 	if len(mt.queue) == 0 {
-		return []error{}
+		return nil
 	}
 
 	mt.lastSendingDate = time.Now().Unix()
@@ -401,19 +405,34 @@ func (mt *Metrics) Send() []error {
 // Send sends metrics data to Librato service
 func (cl *Collector) Send() []error {
 	if Mail == "" || Token == "" {
-		return []error{errors.New("Access credentials is not set")}
+		return errAccessCredentials
 	}
 
-	ms := cl.collectFunc()
+	measurements := cl.collectFunc()
 
-	if len(ms) == 0 {
-		return []error{}
+	if len(measurements) == 0 {
+		return nil
+	}
+
+	var errs []error
+
+	for _, m := range measurements {
+		err := m.Validate()
+
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) != 0 {
+		cl.execErrorHandler(errs)
+		return errs
 	}
 
 	cl.lastSendingDate = time.Now().Unix()
 
-	data := convertMeasurementSlice(ms)
-	errs := execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
+	data := convertMeasurementSlice(measurements)
+	errs = execRequest(req.POST, APIEndpoint+"/v1/metrics/", data)
 
 	cl.execErrorHandler(errs)
 
@@ -503,28 +522,24 @@ func sendingLoop() {
 
 // convertMeasurementSlice convert slice with measurements to struct
 // with counters and gauges slices
-func convertMeasurementSlice(queue []Measurement) measurements {
+func convertMeasurementSlice(data []Measurement) measurements {
 	result := measurements{}
 
-	for _, m := range queue {
+	for _, m := range data {
 		switch m.(type) {
 		case Gauge:
 			if result.Gauges == nil {
 				result.Gauges = make([]Gauge, 0)
 			}
 
-			gauge := m.(Gauge)
-
-			result.Gauges = append(result.Gauges, gauge)
+			result.Gauges = append(result.Gauges, m.(Gauge))
 
 		case Counter:
 			if result.Counters == nil {
 				result.Counters = make([]Counter, 0)
 			}
 
-			counter := m.(Counter)
-
-			result.Counters = append(result.Counters, counter)
+			result.Counters = append(result.Counters, m.(Counter))
 		}
 	}
 
@@ -700,19 +715,21 @@ func extractErrors(data string) []error {
 func sliceToErrors(data []string) []error {
 	var result []error
 
-	for _, e := range data {
-		result = append(result, errors.New(e))
+	for _, err := range data {
+		result = append(result, errors.New(err))
 	}
 
 	return result
 }
 
 // mapToErrors convert map with prop name and description to slice with errors
-func mapToErrors(data map[string]string) []error {
+func mapToErrors(data map[string][]string) []error {
 	var result []error
 
-	for p, e := range data {
-		result = append(result, fmt.Errorf("%s: %s", p, e))
+	for _, errSlice := range data {
+		for _, err := range errSlice {
+			result = append(result, errors.New(err))
+		}
 	}
 
 	return result
