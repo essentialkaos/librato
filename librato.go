@@ -23,7 +23,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "2.0.5"
+const VERSION = "2.0.6"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -223,9 +223,6 @@ var (
 	Mail  = ""
 	Token = ""
 )
-
-// Global prefix which will be used for all metrics
-var Prefix = ""
 
 // APIEndpoint contians URL of Librato API endpoint
 var APIEndpoint = "https://metrics-api.librato.com"
