@@ -8,7 +8,7 @@ import (
 
 	"pkg.re/essentialkaos/ek.v3/rand"
 
-	"github.com/essentialkaos/librato"
+	"pkg.re/essentialkaos/librato.v2"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //

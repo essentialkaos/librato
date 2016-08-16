@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.6.2
+  - 1.6.3
   - tip
 
 sudo: false
@@ -11,6 +11,8 @@ os:
 
 before_install:
   - go get pkg.re/essentialkaos/ek.v3
+  - mkdir -p $GOPATH/src/pkg.re/essentialkaos
+  - ln -sf $GOPATH/src/github.com/essentialkaos/librato $GOPATH/src/pkg.re/essentialkaos/librato.v2
 
 script:
   - go build examples/annotations_example.go
