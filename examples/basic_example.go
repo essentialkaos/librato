@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v2/rand"
+	"pkg.re/essentialkaos/ek.v3/rand"
 
 	"github.com/essentialkaos/librato"
 )
