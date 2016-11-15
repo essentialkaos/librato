@@ -22,7 +22,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "3.0.1"
+const VERSION = "4.0.0"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -49,10 +49,10 @@ type Metrics struct {
 	lastSendingDate int64
 	initialized     bool
 	queue           []Measurement
-	engine          *req.Engine
 
 	// Function executed if we have errors while sending data to Librato
 	ErrorHandler func(errs []error)
+	Engine       *req.Engine
 }
 
 // Collector struct
@@ -60,10 +60,10 @@ type Collector struct {
 	period          time.Duration
 	lastSendingDate int64
 	collectFunc     func() []Measurement
-	engine          *req.Engine
 
 	// Function executed if we have errors while sending data to Librato
 	ErrorHandler func(errs []error)
+	Engine       *req.Engine
 }
 
 // Gauge struct
@@ -228,6 +228,12 @@ var (
 // APIEndpoint contians URL of Librato API endpoint
 var APIEndpoint = "https://metrics-api.librato.com"
 
+// Engine is global req.Engine which used for sync requests
+var Engine = &req.Engine{}
+
+// UseGlobalEngine set to true for using global engine for all requests
+var UseGlobalEngine = false
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // List of sources
@@ -237,10 +243,8 @@ var sources []DataSource
 var (
 	errAccessCredentials = []error{errors.New("Access credentials is not set")}
 	errEmptyStreamName   = []error{errors.New("Stream name can't be empty")}
+	errEngineIsNil       = []error{errors.New("Engine is nil")}
 )
-
-// Request engine
-var engine = &req.Engine{}
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -252,7 +256,12 @@ func NewMetrics(period time.Duration, maxQueueSize int) (*Metrics, error) {
 		initialized:     true,
 		queue:           make([]Measurement, 0),
 		lastSendingDate: -1,
-		engine:          &req.Engine{},
+	}
+
+	if UseGlobalEngine {
+		metrics.Engine = Engine
+	} else {
+		metrics.Engine = &req.Engine{}
 	}
 
 	err := validateMetrics(metrics)
@@ -277,12 +286,17 @@ func NewCollector(period time.Duration, collectFunc func() []Measurement) *Colle
 		period:          period,
 		collectFunc:     collectFunc,
 		lastSendingDate: -1,
-		engine:          &req.Engine{},
 	}
 
 	if sources == nil {
 		sources = make([]DataSource, 0)
 		go sendingLoop()
+	}
+
+	if UseGlobalEngine {
+		collector.Engine = Engine
+	} else {
+		collector.Engine = &req.Engine{}
 	}
 
 	sources = append(sources, collector)
@@ -318,7 +332,7 @@ func AddMetric(m ...Measurement) []error {
 		}
 	}
 
-	return execRequest(engine, req.POST, APIEndpoint+"/v1/metrics/", data)
+	return execRequest(Engine, req.POST, APIEndpoint+"/v1/metrics/", data)
 }
 
 // AddAnnotation synchronously send annotation to librato
@@ -333,7 +347,7 @@ func AddAnnotation(stream string, a Annotation) []error {
 		return []error{err}
 	}
 
-	return execRequest(engine, req.POST, APIEndpoint+"/v1/annotations/"+stream, a)
+	return execRequest(Engine, req.POST, APIEndpoint+"/v1/annotations/"+stream, a)
 }
 
 // DeleteAnnotations synchronously remove annotation stream on librato
@@ -342,7 +356,7 @@ func DeleteAnnotations(stream string) []error {
 		return errEmptyStreamName
 	}
 
-	return execRequest(engine, req.DELETE, APIEndpoint+"/v1/annotations/"+stream, nil)
+	return execRequest(Engine, req.DELETE, APIEndpoint+"/v1/annotations/"+stream, nil)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -396,7 +410,7 @@ func (mt *Metrics) Send() []error {
 
 	mt.queue = make([]Measurement, 0)
 
-	errs := execRequest(mt.engine, req.POST, APIEndpoint+"/v1/metrics/", data)
+	errs := execRequest(mt.Engine, req.POST, APIEndpoint+"/v1/metrics/", data)
 
 	mt.execErrorHandler(errs)
 
@@ -433,7 +447,7 @@ func (cl *Collector) Send() []error {
 	cl.lastSendingDate = time.Now().Unix()
 
 	data := convertMeasurementSlice(measurements)
-	errs = execRequest(cl.engine, req.POST, APIEndpoint+"/v1/metrics/", data)
+	errs = execRequest(cl.Engine, req.POST, APIEndpoint+"/v1/metrics/", data)
 
 	cl.execErrorHandler(errs)
 
@@ -549,6 +563,10 @@ func convertMeasurementSlice(data []Measurement) measurements {
 
 // execRequest create and execute request to API
 func execRequest(engine *req.Engine, method, url string, data interface{}) []error {
+	if engine == nil {
+		return errEngineIsNil
+	}
+
 	if engine.UserAgent == "" {
 		engine.SetUserAgent("go-ek-librato", VERSION)
 	}
