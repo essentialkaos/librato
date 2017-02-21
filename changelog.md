@@ -1,5 +1,15 @@
 ## Changelog
 
+#### v4.1.0
+
+* `ek` package updated to v6
+
+#### v4.0.0
+
+* Custom [ek](https://github.com/essentialkaos/ek) `req.Engine` support
+
+---
+
 #### v3.0.0
 
 * Each `Metrics` and `Collector` instance now have it's own `req.Engine` for sending requests

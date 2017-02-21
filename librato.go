@@ -3,8 +3,8 @@ package librato
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 //                                                                                    //
-//                     Copyright (c) 2009-2015 Essential Kaos                         //
-//      Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>         //
+//                     Copyright (c) 2009-2017 ESSENTIAL KAOS                         //
+//        Essential Kaos Open Source License <https://essentialkaos.com/ekol>         //
 //                                                                                    //
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -15,14 +15,14 @@ import (
 	"strings"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v5/req"
-	"pkg.re/essentialkaos/ek.v5/timeutil"
+	"pkg.re/essentialkaos/ek.v6/req"
+	"pkg.re/essentialkaos/ek.v6/timeutil"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "4.0.0"
+const VERSION = "4.1.0"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
