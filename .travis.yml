@@ -5,6 +5,7 @@ language: go
 go:
   - 1.6.x
   - 1.7.x
+  - 1.8.x
   - tip
 
 branches:
@@ -21,9 +22,9 @@ matrix:
     - go: tip
 
 before_install:
-  - go get pkg.re/essentialkaos/ek.v6
+  - go get pkg.re/essentialkaos/ek.v7
   - mkdir -p $GOPATH/src/pkg.re/essentialkaos
-  - ln -sf $GOPATH/src/github.com/essentialkaos/librato $GOPATH/src/pkg.re/essentialkaos/librato.v4
+  - ln -sf $GOPATH/src/github.com/essentialkaos/librato $GOPATH/src/pkg.re/essentialkaos/librato.v5
 
 script:
   - go build examples/annotations_example.go

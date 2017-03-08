@@ -1,5 +1,11 @@
 ## Changelog
 
+#### v5.0.0
+
+* `ek` package updated to v7
+
+---
+
 #### v4.1.0
 
 * `ek` package updated to v6
