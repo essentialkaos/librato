@@ -4,15 +4,23 @@ Package for working with [Librato Metrics](https://www.librato.com) API from Go 
 
 ## Installation
 
-````
+Before the initial install allows git to use redirects for [pkg.re](https://github.com/essentialkaos/pkgre) service (reason why you should do this described [here](https://github.com/essentialkaos/pkgre#git-support)):
+
+```
+git config --global http.https://pkg.re.followRedirects true
+```
+
+Make sure you have a working Go 1.6+ workspace ([instructions](https://golang.org/doc/install)), then
+
+```
 go get pkg.re/essentialkaos/librato.v5
-````
+```
 
 For update to latest stable release, do:
 
-````
+```
 go get -u pkg.re/essentialkaos/librato.v5
-````
+```
 
 ## Examples
 
