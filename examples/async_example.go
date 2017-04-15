@@ -8,7 +8,7 @@ import (
 
 	"pkg.re/essentialkaos/ek.v8/rand"
 
-	"pkg.re/essentialkaos/librato.6"
+	"pkg.re/essentialkaos/librato.v6"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
