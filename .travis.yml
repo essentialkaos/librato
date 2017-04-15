@@ -22,7 +22,7 @@ matrix:
     - go: tip
 
 before_install:
-  - go get pkg.re/essentialkaos/ek.v7
+  - make deps
   - mkdir -p $GOPATH/src/pkg.re/essentialkaos
   - ln -sf $GOPATH/src/github.com/essentialkaos/librato $GOPATH/src/pkg.re/essentialkaos/librato.v5
 

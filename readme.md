@@ -1,4 +1,4 @@
-# Librato [![GoDoc](https://godoc.org/pkg.re/essentialkaos/librato.v5?status.svg)](https://godoc.org/pkg.re/essentialkaos/librato.v5) [![Build Status](https://travis-ci.org/essentialkaos/librato.svg?branch=master)](https://travis-ci.org/essentialkaos/librato) [![Go Report Card](https://goreportcard.com/badge/github.com/essentialkaos/librato)](https://goreportcard.com/report/github.com/essentialkaos/librato) [![codebeat badge](https://codebeat.co/badges/f82e704d-67a7-4c6f-9e5d-1acf058c937b)](https://codebeat.co/projects/github-com-essentialkaos-librato) [![License](https://gh.kaos.io/ekol.svg)](https://essentialkaos.com/ekol)
+# Librato [![GoDoc](https://godoc.org/pkg.re/essentialkaos/librato.v6?status.svg)](https://godoc.org/pkg.re/essentialkaos/librato.v6) [![Build Status](https://travis-ci.org/essentialkaos/librato.svg?branch=master)](https://travis-ci.org/essentialkaos/librato) [![Go Report Card](https://goreportcard.com/badge/github.com/essentialkaos/librato)](https://goreportcard.com/report/github.com/essentialkaos/librato) [![codebeat badge](https://codebeat.co/badges/f82e704d-67a7-4c6f-9e5d-1acf058c937b)](https://codebeat.co/projects/github-com-essentialkaos-librato) [![License](https://gh.kaos.io/ekol.svg)](https://essentialkaos.com/ekol)
 
 Package for working with [Librato Metrics](https://www.librato.com) API from Go code.
 
@@ -13,13 +13,13 @@ git config --global http.https://pkg.re.followRedirects true
 Make sure you have a working Go 1.6+ workspace ([instructions](https://golang.org/doc/install)), then
 
 ```
-go get pkg.re/essentialkaos/librato.v5
+go get pkg.re/essentialkaos/librato.v6
 ```
 
 For update to latest stable release, do:
 
 ```
-go get -u pkg.re/essentialkaos/librato.v5
+go get -u pkg.re/essentialkaos/librato.v6
 ```
 
 ## Examples
