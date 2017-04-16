@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v7/rand"
+	"pkg.re/essentialkaos/ek.v8/rand"
 
-	"pkg.re/essentialkaos/librato.v5"
+	"pkg.re/essentialkaos/librato.v6"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
