@@ -4,11 +4,10 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v8/rand"
-
-	"pkg.re/essentialkaos/librato.v6"
+	"pkg.re/essentialkaos/librato.v7"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -21,16 +20,16 @@ func main() {
 		errs := librato.AddMetric(
 			librato.Gauge{
 				Name:  "example:gauge_1",
-				Value: rand.Int(1000),
+				Value: randomInt(1000),
 			},
 			librato.Gauge{
 				Name:   "example:gauge_2",
-				Value:  float64(rand.Int(1000)) / 5.0,
+				Value:  float64(randomInt(1000)) / 5.0,
 				Source: "go_librato_example",
 			},
 			librato.Counter{
 				Name:  "example:counter_1",
-				Value: rand.Int(1000),
+				Value: randomInt(1000),
 			},
 		)
 
@@ -46,4 +45,9 @@ func main() {
 
 		time.Sleep(time.Minute)
 	}
+}
+
+func randomInt(n int) int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return rand.Intn(n)
 }

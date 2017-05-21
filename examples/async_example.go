@@ -4,11 +4,10 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
-	"pkg.re/essentialkaos/ek.v8/rand"
-
-	"pkg.re/essentialkaos/librato.v6"
+	"pkg.re/essentialkaos/librato.v7"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -31,10 +30,15 @@ func main() {
 		metrics.Add(
 			librato.Gauge{
 				Name:  "example:gauge_1",
-				Value: rand.Int(1000),
+				Value: randomInt(1000),
 			},
 		)
 
 		time.Sleep(15 * time.Second)
 	}
+}
+
+func randomInt(n int) int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return rand.Intn(n)
 }
