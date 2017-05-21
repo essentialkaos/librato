@@ -2,6 +2,8 @@
 
 ### 7.0.0
 
+* `ek` package updated to v9
+
 ---
 
 ### 6.0.0

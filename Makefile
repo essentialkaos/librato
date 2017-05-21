@@ -5,9 +5,13 @@
 
 ########################################################################################
 
-.PHONY = fmt metalinter
+.PHONY = fmt deps metalinter
 
 ########################################################################################
+
+deps:
+	git config --global http.https://pkg.re.followRedirects true
+	go get -d -v pkg.re/essentialkaos/ek.v9
 
 fmt:
 	find . -name "*.go" -exec gofmt -s -w {} \;
