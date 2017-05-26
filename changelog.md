@@ -1,47 +1,60 @@
 ## Changelog
 
-#### v5.0.0
+### 7.0.0
+
+* `ek` package updated to v9
+
+---
+
+### 6.0.0
+
+* `ek` package updated to v8
+* Improved Makefile
+
+---
+
+#### 5.0.0
 
 * `ek` package updated to v7
 
 ---
 
-#### v4.1.0
+#### 4.1.0
 
 * `ek` package updated to v6
 
-#### v4.0.0
+#### 4.0.0
 
 * Custom [ek](https://github.com/essentialkaos/ek) `req.Engine` support
 
 ---
 
-#### v3.0.0
+#### 3.0.0
 
 * Each `Metrics` and `Collector` instance now have it's own `req.Engine` for sending requests
 * EK package updated to v5
 
 ---
 
-#### v2.0.5
+#### 2.0.5
 
 * Fixed error handling
 * Improved error handling
 * Code refactoring
 
-#### v2.0.4
+#### 2.0.4
 
 * Improved error handling
 
-#### v2.0.3
+#### 2.0.3
 
 * Global prefix feature removed
 
-#### v2.0.1
+#### 2.0.1
 
 * EK package updated to latest version
 
-#### v2.0.0
+#### 2.0.0
 
 * Added usage examples
 * Using values instead pointers for measurements (gauge/counter) structs
@@ -50,20 +63,20 @@
 
 ---
 
-#### v1.2.1
+#### 1.2.1
 
 * Added pkg.re usage
 
-#### v1.2
+#### 1.2.0
 
 * Improved async data sending
 * Fixed minor bug with getting EOF error
 
-#### v1.1
+#### 1.1.0
 
 * Added `Collector` for collecting metrics for some period
 * Some minor improvements
 
-#### v1
+#### 1.0.0
 
 Initial public release
