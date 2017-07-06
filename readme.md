@@ -2,7 +2,7 @@
 
 Package for working with [Librato Metrics](https://www.librato.com) API from Go code.
 
-## Installation
+### Installation
 
 Before the initial install allows git to use redirects for [pkg.re](https://github.com/essentialkaos/pkgre) service (reason why you should do this described [here](https://github.com/essentialkaos/pkgre#git-support)):
 
@@ -22,13 +22,15 @@ For update to latest stable release, do:
 go get -u pkg.re/essentialkaos/librato.v7
 ```
 
-## Examples
+### Examples
 
 * [Basic Usage](examples/basic_example.go)
 * [Metrics Collector](examples/collector_example.go)
 * [Async Sending](examples/async_example.go)
 * [Annotations](examples/annotations_example.go)
 
-## License
+### License
 
 [EKOL](https://essentialkaos.com/ekol)
+
+<p align="center"><a href="https://essentialkaos.com"><img src="https://gh.kaos.io/ekgh.svg"/></a></p>
