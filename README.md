@@ -1,4 +1,4 @@
-<p align="center"><a href="#readme"><img src="https://gh.kaos.st/mdtoc.svg"/></a></p>
+<p align="center"><a href="#readme"><img src="https://gh.kaos.st/go-librato.svg"/></a></p>
 
 <p align="center"><a href="#installation">Installation</a> • <a href="#examples">Examples</a> • <a href="#license">License</a></p>
 
