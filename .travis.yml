@@ -3,9 +3,8 @@ sudo: false
 language: go
 
 go:
-  - 1.8.x
-  - 1.9.x
   - 1.10.x
+  - 1.11.x
   - tip
 
 branches:
@@ -24,7 +23,7 @@ matrix:
 before_install:
   - make deps
   - mkdir -p $GOPATH/src/pkg.re/essentialkaos
-  - ln -sf $GOPATH/src/github.com/essentialkaos/librato $GOPATH/src/pkg.re/essentialkaos/librato.v7
+  - ln -sf $GOPATH/src/github.com/essentialkaos/librato $GOPATH/src/pkg.re/essentialkaos/librato.v8
 
 script:
   - go build examples/annotations_example.go

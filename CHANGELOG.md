@@ -1,5 +1,11 @@
 ## Changelog
 
+### 8.0.0
+
+* `ek` package updated to v10
+
+---
+
 ### 7.0.0
 
 * `ek` package updated to v9
