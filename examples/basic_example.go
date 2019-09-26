@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"pkg.re/essentialkaos/librato.v9"
+	"github.com/essentialkaos/librato"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
