@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://godoc.org/pkg.re/essentialkaos/librato.v8"><img src="https://godoc.org/pkg.re/essentialkaos/librato.v8?status.svg"></a>
-  <a href="https://travis-ci.org/essentialkaos/librato"><img src="https://travis-ci.org/essentialkaos/librato.svg"></a>
+  <a href="https://travis-ci.com/essentialkaos/librato"><img src="https://travis-ci.com/essentialkaos/librato.svg"></a>
   <a href="https://goreportcard.com/report/github.com/essentialkaos/librato"><img src="https://goreportcard.com/badge/github.com/essentialkaos/librato"></a>
   <a href="https://codebeat.co/projects/github-com-essentialkaos-librato"><img alt="codebeat badge" src="https://codebeat.co/badges/f82e704d-67a7-4c6f-9e5d-1acf058c937b" /></a>
   <a href="https://essentialkaos.com/ekol"><img src="https://gh.kaos.st/ekol.svg"></a>
