@@ -1,7 +1,7 @@
 <p align="center"><a href="#readme"><img src="https://gh.kaos.st/go-librato.svg"/></a></p>
 
 <p align="center">
-  <a href="https://godoc.org/pkg.re/essentialkaos/librato.v8"><img src="https://godoc.org/pkg.re/essentialkaos/librato.v8?status.svg"></a>
+  <a href="https://godoc.org/pkg.re/essentialkaos/librato.v10"><img src="https://godoc.org/pkg.re/essentialkaos/librato.v10?status.svg"></a>
   <a href="https://travis-ci.com/essentialkaos/librato"><img src="https://travis-ci.com/essentialkaos/librato.svg"></a>
   <a href="https://goreportcard.com/report/github.com/essentialkaos/librato"><img src="https://goreportcard.com/badge/github.com/essentialkaos/librato"></a>
   <a href="https://codebeat.co/projects/github-com-essentialkaos-librato"><img alt="codebeat badge" src="https://codebeat.co/badges/f82e704d-67a7-4c6f-9e5d-1acf058c937b" /></a>
@@ -22,16 +22,16 @@ Before the initial install allows git to use redirects for [pkg.re](https://gith
 git config --global http.https://pkg.re.followRedirects true
 ```
 
-Make sure you have a working Go 1.10+ workspace (_[instructions](https://golang.org/doc/install)_), then
+Make sure you have a working Go 1.13+ workspace (_[instructions](https://golang.org/doc/install)_), then
 
 ```
-go get pkg.re/essentialkaos/librato.v9
+go get pkg.re/essentialkaos/librato.v10
 ```
 
 For update to latest stable release, do:
 
 ```
-go get -u pkg.re/essentialkaos/librato.v9
+go get -u pkg.re/essentialkaos/librato.v10
 ```
 
 ### Examples
