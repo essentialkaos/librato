@@ -1,11 +1,11 @@
 <p align="center"><a href="#readme"><img src="https://gh.kaos.st/go-librato.svg"/></a></p>
 
 <p align="center">
-  <a href="https://godoc.org/pkg.re/essentialkaos/librato.v10"><img src="https://godoc.org/pkg.re/essentialkaos/librato.v10?status.svg"></a>
+  <a href="https://pkg.go.dev/github.com/essentialkaos/librato"><img src="https://pkg.go.dev/badge/github.com/essentialkaos/librato" /></a>
   <a href="https://travis-ci.com/essentialkaos/librato"><img src="https://travis-ci.com/essentialkaos/librato.svg"></a>
   <a href="https://goreportcard.com/report/github.com/essentialkaos/librato"><img src="https://goreportcard.com/badge/github.com/essentialkaos/librato"></a>
   <a href="https://codebeat.co/projects/github-com-essentialkaos-librato"><img alt="codebeat badge" src="https://codebeat.co/badges/f82e704d-67a7-4c6f-9e5d-1acf058c937b" /></a>
-  <a href="https://essentialkaos.com/ekol"><img src="https://gh.kaos.st/ekol.svg"></a>
+  <a href="#license"><img src="https://gh.kaos.st/apache2.svg"></a>
 </p>
 
 <p align="center"><a href="#installation">Installation</a> • <a href="#examples">Examples</a> • <a href="#license">License</a></p>
@@ -43,6 +43,6 @@ go get -u pkg.re/essentialkaos/librato.v10
 
 ### License
 
-[EKOL](https://essentialkaos.com/ekol)
+[Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 <p align="center"><a href="https://essentialkaos.com"><img src="https://gh.kaos.st/ekgh.svg"/></a></p>
