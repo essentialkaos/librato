@@ -22,7 +22,7 @@ import (
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 // VERSION contains current version of librato package and used as part of User-Agent
-const VERSION = "10.0.0"
+const VERSION = "10.0.1"
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -520,7 +520,7 @@ func sendingLoop() {
 		now := time.Now().Unix()
 
 		for _, source := range sources {
-			period := timeutil.DurationToSeconds(source.getPeriod())
+			period := int64(timeutil.DurationToSeconds(source.getPeriod()))
 			lastSendTime := source.getLastSendingDate()
 
 			if period == 0 || lastSendTime <= 0 {
