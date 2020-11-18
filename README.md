@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://pkg.go.dev/github.com/essentialkaos/librato"><img src="https://pkg.go.dev/badge/github.com/essentialkaos/librato" /></a>
-  <a href="https://travis-ci.com/essentialkaos/librato"><img src="https://travis-ci.com/essentialkaos/librato.svg"></a>
+  <a href="https://github.com/essentialkaos/librato/actions"><img src="https://github.com/essentialkaos/librato/workflows/CI/badge.svg" alt="GitHub Actions Status" /></a>
   <a href="https://goreportcard.com/report/github.com/essentialkaos/librato"><img src="https://goreportcard.com/badge/github.com/essentialkaos/librato"></a>
   <a href="https://codebeat.co/projects/github-com-essentialkaos-librato"><img alt="codebeat badge" src="https://codebeat.co/badges/f82e704d-67a7-4c6f-9e5d-1acf058c937b" /></a>
   <a href="#license"><img src="https://gh.kaos.st/apache2.svg"></a>
@@ -16,13 +16,7 @@ Package for working with [Librato Metrics](https://www.librato.com) API from Go 
 
 ### Installation
 
-Before the initial install allows git to use redirects for [pkg.re](https://github.com/essentialkaos/pkgre) service (_reason why you should do this described [here](https://github.com/essentialkaos/pkgre#git-support)_):
-
-```
-git config --global http.https://pkg.re.followRedirects true
-```
-
-Make sure you have a working Go 1.13+ workspace (_[instructions](https://golang.org/doc/install)_), then
+Make sure you have a working Go 1.14+ workspace (_[instructions](https://golang.org/doc/install)_), then
 
 ```
 go get pkg.re/essentialkaos/librato.v10
