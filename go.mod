@@ -1,4 +1,4 @@
-module github.com/essentialkaos/librato
+module github.com/essentialkaos/librato/v10
 
 go 1.17
 
