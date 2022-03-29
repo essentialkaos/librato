@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/essentialkaos/librato"
+	"github.com/essentialkaos/librato/v10"
 )
 
 // ////////////////////////////////////////////////////////////////////////////////// //
