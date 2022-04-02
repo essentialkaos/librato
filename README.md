@@ -16,16 +16,16 @@ Package for working with [Librato Metrics](https://www.librato.com) API from Go 
 
 ### Installation
 
-Make sure you have a working Go 1.14+ workspace (_[instructions](https://golang.org/doc/install)_), then
+Make sure you have a working Go 1.17+ workspace (_[instructions](https://golang.org/doc/install)_), then
 
 ```
-go get pkg.re/essentialkaos/librato.v10
+go get github.com/essentialkaos/librato/v10
 ```
 
 For update to latest stable release, do:
 
 ```
-go get -u pkg.re/essentialkaos/librato.v10
+go get -u github.com/essentialkaos/librato/v10
 ```
 
 ### Examples
